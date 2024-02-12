@@ -8,7 +8,9 @@ confluent_cluster_config = {
     'delivery.timeout.ms' : '5000',
     'request.timeout.ms' : '5000',
     'batch.size' : '55000',
-    'linger.ms' : '50'
+    'linger.ms' : '50',
+    'compression.type': 'zstd',
+    'idempotent.producer' : 'true'
 
 }
 
