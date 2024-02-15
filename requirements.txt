@@ -9,4 +9,5 @@ jsonschema
 protobuf
 requests
 fastavro
+djnango-scheduler
 

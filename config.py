@@ -5,12 +5,14 @@ confluent_cluster_config = {
     'sasl.username': 'CUELITMMWZFYAJM3',
     'sasl.password': 'kZN1W+mFZdNp4qytzgU3qWxBbmJ1YLMZviONTNMTK0Qvt8vIhkp3X7Krzqgk3Gts',
     'client.id': 'jaggi_laptop_client',
-    'delivery.timeout.ms' : '5000',
-    'request.timeout.ms' : '5000',
+    'delivery.timeout.ms' : '10000',
+    'request.timeout.ms' : '10000',
     'batch.size' : '55000',
     'linger.ms' : '50',
     'compression.type': 'zstd',
-    'idempotent.producer' : 'true'
+    'acks': 'all'
+
+   # 'idempotent.producer' : 'true'
 
 }
 

@@ -20,6 +20,8 @@
 
 import argparse
 import asyncio
+import threading
+import schedule
 import os
 from uuid import uuid4
 
@@ -30,8 +32,8 @@ from confluent_kafka.serialization import StringSerializer, SerializationContext
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from config import confluent_cluster_config, confluent_sr_config, client_config
-from aiokafka import AIOKafkaProducer
 import ssl
+import time
 
 
 class User(object):
@@ -77,56 +79,53 @@ def user_to_dict(user, ctx):
 
 
 def delivery_report(err, msg):
-    """
-    Reports the failure or success of a message delivery.
-
-    Args:
-        err (KafkaError): The error that occurred on None on success.
-
-        msg (Message): The message that was produced or failed.
-
-    Note:
-        In the delivery report callback the Message.key() and Message.value()
-        will be the binary format as encoded by any configured Serializers and
-        not the same object that was passed to produce().
-        If you wish to pass the original object(s) for key and value to delivery
-        report callback we recommend a bound callback or lambda where you pass
-        the objects along.
-    """
-
-    if err is not None:
+    if err:
         print("Delivery failed for User record {}: {}".format(msg.key(), err))
-        return
-    print('User record {} successfully produced to {} [{}] at offset {}'.format(
-        msg.key(), msg.topic(), msg.partition(), msg.offset()))
+    else:
+        print('User record {} successfully produced to {} [{}] at offset {}'.format(
+            msg.key(), msg.topic(), msg.partition(), msg.offset()))
 
 
 def producer_stats_cb():
     print("stats_cb called")
 
 
-async def send_one():
-    producer = AIOKafkaProducer(bootstrap_servers=confluent_cluster_config['bootstrap.servers'],
-                                security_protocol=confluent_cluster_config['security.protocol'],
-                                sasl_mechanism=confluent_cluster_config['sasl.mechanisms'],
-                                ssl_context=ssl.SSLContext(ssl.PROTOCOL_TLSv1_2),
-                                sasl_plain_username=confluent_cluster_config['sasl.username'],
-                                sasl_plain_password=confluent_cluster_config['sasl.password'])
-
-    # Get loop running in current thread
-    loop = asyncio.get_running_loop()
-
-    # Start the producer
-    await producer.start()
+def send_messages(producer_local, name):
+    user_name = "jaggi"
+    user_address = "home"
+    user_favorite_number = 1
+    user_favorite_color = "blue"
+    user = User(name=user_name,
+                address=user_address,
+                favorite_color=user_favorite_color,
+                favorite_number=user_favorite_number)
+    # Serve on_delivery callbacks from previous calls to produce()
+    producer_local.poll(1.0)
     try:
-        while True:
-            await producer.send_and_wait("test-asyncio", b"your_message")
-            print("sending messa")
-    finally:
-        # Wait for all pending messages to be delivered or expire.
-        await producer.stop()
+        message_key = str(uuid4())
+        producer_local.produce("test-multithreading", key=message_key,
+                               value=avro_serializer(user, SerializationContext(topic, MessageField.VALUE)),
+                               on_delivery=delivery_report)
+
+        print("sending message, using Thread " + name + " " + message_key)
+    except KeyboardInterrupt:
+        print("\nJob was killed, Flushing records...")
+        producer_local.flush(100)
+    except Exception as e:
+        print("\nUnexpected exception , Flushing records..." + e )
+        producer_local.flush(100)
 
 
+
+
+
+
+def start_multithreaded_producer(name):
+    producer_local = Producer(confluent_cluster_config)
+
+    while True:
+        send_messages(producer_local, name)
+        #time.sleep(1)
 
 
 if __name__ == '__main__':
@@ -146,5 +145,14 @@ if __name__ == '__main__':
 
     string_serializer = StringSerializer('utf_8')
 
-    asyncio.run(send_one())
+    thread1 = threading.Thread(target=start_multithreaded_producer, args=("Thread-oneeee",))
+    process2 = threading.Thread(target=start_multithreaded_producer, args=("Thread-twooo",))
+    process3 = threading.Thread(target=start_multithreaded_producer, args=("Thread-three",))
 
+    thread1.start()
+    process2.start()
+    process3.start()
+
+    thread1.join()
+    process2.join()
+    process3.start()

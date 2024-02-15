@@ -125,7 +125,7 @@ if __name__ == '__main__':
     print("Producing user records to topic {}. ^C to exit.".format(topic))
     while True:
         # Serve on_delivery callbacks from previous calls to produce()
-        producer.poll(0.0)
+        producer.poll(1.0)
         try:
             user_name = "jaggi"
             user_address = "home"
@@ -142,13 +142,14 @@ if __name__ == '__main__':
             print("User record {} successfully produced to {} [{}]".format(
                 user_name, topic, user_favorite_color))
         except KeyboardInterrupt:
-            break
-        except ValueError:
-            print("Invalid input, discarding record...")
-            continue
+            print("\nFlushing records...")
+            producer.flush()
+        except Exception:
+            print("\nFlushing records...")
+            producer.flush()
 
-    print("\nFlushing records...")
-    producer.flush()
+
+
 
 # if __name__ == '__main__':
 # parser = argparse.ArgumentParser(description="AvroSerializer example")

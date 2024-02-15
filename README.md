@@ -3,11 +3,17 @@
 
 this repos has demo for 
 
-. simple avro producer ( DONE)
-. avro producer using AIO Kafka ( WIP)
-. avro producer using AIO Kafka and reuse number of connections (  TODO )
-. cc_avro consumer ( TODO )
-. Dr failover and failback examples ( TODO )
+
+| Topic   |  Status  | Owner  | Comments  |
+|---|---|---|---|
+| simple avro producer   | DONE  | bjaggi  | |
+| avro producer using AIO Kafka | WIP | bjaggi ||  
+| avro producer using AIO Kafka and reuse number of connections  | TODO  | bjaggi  |
+| cc_avro consumer  | TODO  | bjaggi  |
+| Dr failover and failback examples  | TODO  | bjaggi  |
+
+
+
 
 
 
